@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>After-Hours Daily Operations Dashboard</title>
+    <style>
+        :root {
+            --green: #10b981;
+            --green-bg: #d1fae5;
+            --yellow: #f59e0b;
+            --yellow-bg: #fef3c7;
+            --red: #ef4444;
+            --red-bg: #fee2e2;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .score-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--gray-300);
+            transition: all 0.3s ease;
+        }
+
+        .score-card.green { border-left-color: var(--green); }
+        .score-card.yellow { border-left-color: var(--yellow); }
+        .score-card.red { border-left-color: var(--red); }
+
+        .score-card h3 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            margin-bottom: 0.75rem;
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .score-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .status-badge {
+            padding: 0.375rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.green { background: var(--green-bg); color: var(--green); }
+        .status-badge.yellow { background: var(--yellow-bg); color: var(--yellow); }
+        .status-badge.red { background: var(--red-bg); color: var(--red); }
+
+        .total-score-card {
+            background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dark) 100%);
+            color: white;
+        }
+
+        .total-score-card h3 {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .total-score-card .score-number {
+            color: white;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .section-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-estimate {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            background: var(--gray-100);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .checklist input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.125rem;
+            cursor: pointer;
+            accent-color: var(--green);
+        }
+
+        .checklist label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .checklist .checked {
+            text-decoration: line-through;
+            color: var(--gray-400);
+        }
+
+        .notes-field {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.2s;
+        }
+
+        .notes-field:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        .notes-field::placeholder {
+            color: var(--gray-400);
+        }
+
+        .score-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .score-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            background: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .score-btn:hover {
+            border-color: var(--blue);
+        }
+
+        .score-btn.selected {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: white;
+        }
+
+        .status-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .status-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            background: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-btn.green-btn:hover, .status-btn.green-btn.selected {
+            border-color: var(--green);
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .status-btn.yellow-btn:hover, .status-btn.yellow-btn.selected {
+            border-color: var(--yellow);
+            background: var(--yellow-bg);
+            color: var(--yellow);
+        }
+
+        .status-btn.red-btn:hover, .status-btn.red-btn.selected {
+            border-color: var(--red);
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .report-section {
+            background: var(--gray-50);
+            border: 2px dashed var(--gray-300);
+        }
+
+        .issues-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .issue-input {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .issue-input span {
+            color: var(--gray-400);
+            font-weight: 600;
+            width: 1.5rem;
+        }
+
+        .issue-input input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .issue-input input:focus {
+            outline: none;
+            border-color: var(--blue);
+        }
+
+        .escalation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .escalation-box {
+            padding: 1rem;
+            border-radius: 8px;
+            background: var(--gray-50);
+        }
+
+        .escalation-box.immediate {
+            border-left: 4px solid var(--red);
+        }
+
+        .escalation-box.followup {
+            border-left: 4px solid var(--yellow);
+        }
+
+        .escalation-box h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+        }
+
+        .metric-item .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .metric-item .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.green { background: var(--green); }
+        .legend-dot.yellow { background: var(--yellow); }
+        .legend-dot.red { background: var(--red); }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1.5rem;
+            }
+
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            .header-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .score-number {
+                font-size: 2rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .btn-group {
+                display: none;
+            }
+
+            .section, .score-card {
+                box-shadow: none;
+                border: 1px solid var(--gray-200);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+<header>
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <img src="data:image/png;base64,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" style="height:60px;">
+        <div>
+            <h1>YAME CONSULTING - After-Hours Operations Dashboard</h1>
+            <div class="header-meta">
+                <span>📅 <strong id="currentDate"></strong></span>
+                <span>⏱️ Duration: 30 min max</span>
+                <span>👤 Owner: <input type="text" id="ownerName" placeholder="Enter name" style="background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.5); color: white; padding: 0.25rem; width: 150px;"></span>
+            </div>
+        </div>
+    </div>
+</header>
+
+
+        <div class="legend">
+            <div class="legend-item"><span class="legend-dot green"></span> Green (4-5): Healthy</div>
+            <div class="legend-item"><span class="legend-dot yellow"></span> Yellow (2-3): Needs Attention</div>
+            <div class="legend-item"><span class="legend-dot red"></span> Red (0-1): High Risk</div>
+        </div>
+
+        <div class="score-overview">
+            <div class="score-card" id="timeCard">
+                <h3>⏰ Time Entries</h3>
+                <div class="score-display">
+                    <span class="score-number" id="timeScore">0</span>
+                    <span class="status-badge" id="timeStatus">Not Set</span>
+                </div>
+            </div>
+            <div class="score-card" id="ticketCard">
+                <h3>🎫 Tickets</h3>
+                <div class="score-display">
+                    <span class="score-number" id="ticketScore">0</span>
+                    <span class="status-badge" id="ticketStatus">Not Set</span>
+                </div>
+            </div>
+            <div class="score-card" id="sharefileCard">
+                <h3>📁 ShareFile</h3>
+                <div class="score-display">
+                    <span class="score-number" id="sharefileScore">0</span>
+                    <span class="status-badge" id="sharefileStatus">Not Set</span>
+                </div>
+            </div>
+            <div class="score-card total-score-card">
+                <h3>📈 Total Score</h3>
+                <div class="score-display">
+                    <span class="score-number"><span id="totalScore">0</span>/15</span>
+                    <span class="status-badge" id="totalStatus" style="background: rgba(255,255,255,0.2); color: white;">—</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Entry Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>⏰ Time Entry Validation</h2>
+                <span class="time-estimate">~10 min</span>
+            </div>
+            <ul class="checklist" id="timeChecklist">
+                <li>
+                    <input type="checkbox" id="time1">
+                    <label for="time1">No missing time entries</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="time2">
+                    <label for="time2">No under-logged (&lt;6 hrs) or over-logged (&gt;9 hrs)</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="time3">
+                    <label for="time3">Clear, specific descriptions</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="time4">
+                    <label for="time4">Aligned with tickets handled</label>
+                </li>
+            </ul>
+            <div>
+                <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Score (0-5):</label>
+                <div class="score-selector" data-target="time">
+                    <button class="score-btn" data-value="0">0</button>
+                    <button class="score-btn" data-value="1">1</button>
+                    <button class="score-btn" data-value="2">2</button>
+                    <button class="score-btn" data-value="3">3</button>
+                    <button class="score-btn" data-value="4">4</button>
+                    <button class="score-btn" data-value="5">5</button>
+                </div>
+                <div class="status-selector" data-target="time">
+                    <button class="status-btn green-btn" data-status="green">Green</button>
+                    <button class="status-btn yellow-btn" data-status="yellow">Yellow</button>
+                    <button class="status-btn red-btn" data-status="red">Red</button>
+                </div>
+            </div>
+            <textarea class="notes-field" id="timeNotes" placeholder="Flags / Notes..."></textarea>
+        </div>
+
+        <!-- Ticket Health Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🎫 Ticket Health Check</h2>
+                <span class="time-estimate">~10 min</span>
+            </div>
+            <ul class="checklist" id="ticketChecklist">
+                <li>
+                    <input type="checkbox" id="ticket1">
+                    <label for="ticket1">No tickets idle &gt;24 hrs</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="ticket2">
+                    <label for="ticket2">No long "In Progress" without updates</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="ticket3">
+                    <label for="ticket3">High-priority tickets addressed</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="ticket4">
+                    <label for="ticket4">Balanced closure vs workload</label>
+                </li>
+            </ul>
+            <div>
+                <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Score (0-5):</label>
+                <div class="score-selector" data-target="ticket">
+                    <button class="score-btn" data-value="0">0</button>
+                    <button class="score-btn" data-value="1">1</button>
+                    <button class="score-btn" data-value="2">2</button>
+                    <button class="score-btn" data-value="3">3</button>
+                    <button class="score-btn" data-value="4">4</button>
+                    <button class="score-btn" data-value="5">5</button>
+                </div>
+                <div class="status-selector" data-target="ticket">
+                    <button class="status-btn green-btn" data-status="green">Green</button>
+                    <button class="status-btn yellow-btn" data-status="yellow">Yellow</button>
+                    <button class="status-btn red-btn" data-status="red">Red</button>
+                </div>
+            </div>
+            <textarea class="notes-field" id="ticketNotes" placeholder="At-Risk Tickets / Notes..."></textarea>
+        </div>
+
+        <!-- ShareFile Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📁 ShareFile Verification</h2>
+                <span class="time-estimate">~5-10 min</span>
+            </div>
+            <ul class="checklist" id="sharefileChecklist">
+                <li>
+                    <input type="checkbox" id="sharefile1">
+                    <label for="sharefile1">All completed work has uploads</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="sharefile2">
+                    <label for="sharefile2">Correct folder placement</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="sharefile3">
+                    <label for="sharefile3">Complete files (no partials)</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="sharefile4">
+                    <label for="sharefile4">Clear naming conventions</label>
+                </li>
+            </ul>
+            <div>
+                <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Score (0-5):</label>
+                <div class="score-selector" data-target="sharefile">
+                    <button class="score-btn" data-value="0">0</button>
+                    <button class="score-btn" data-value="1">1</button>
+                    <button class="score-btn" data-value="2">2</button>
+                    <button class="score-btn" data-value="3">3</button>
+                    <button class="score-btn" data-value="4">4</button>
+                    <button class="score-btn" data-value="5">5</button>
+                </div>
+                <div class="status-selector" data-target="sharefile">
+                    <button class="status-btn green-btn" data-status="green">Green</button>
+                    <button class="status-btn yellow-btn" data-status="yellow">Yellow</button>
+                    <button class="status-btn red-btn" data-status="red">Red</button>
+                </div>
+            </div>
+            <textarea class="notes-field" id="sharefileNotes" placeholder="Missing / Issues..."></textarea>
+        </div>
+
+        <!-- Daily Report Section -->
+        <div class="section report-section">
+            <div class="section-header">
+                <h2>📋 Daily Report Snapshot</h2>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Top Issues (Max 5):</label>
+                <div class="issues-list" style="margin-top: 0.5rem;">
+                    <div class="issue-input"><span>1.</span><input type="text" id="issue1" placeholder="Issue description..."></div>
+                    <div class="issue-input"><span>2.</span><input type="text" id="issue2" placeholder="Issue description..."></div>
+                    <div class="issue-input"><span>3.</span><input type="text" id="issue3" placeholder="Issue description..."></div>
+                    <div class="issue-input"><span>4.</span><input type="text" id="issue4" placeholder="Issue description..."></div>
+                    <div class="issue-input"><span>5.</span><input type="text" id="issue5" placeholder="Issue description..."></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Staff to Follow Up:</label>
+                    <textarea class="notes-field" id="staffFollowup" placeholder="Names..."></textarea>
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Critical Risks:</label>
+                    <textarea class="notes-field" id="criticalRisks" placeholder="If any..."></textarea>
+                </div>
+                <div>
+                    <label style="font-size: 0.875rem; font-weight: 600; color: var(--gray-600);">Next-Day Priorities:</label>
+                    <textarea class="notes-field" id="nextDayPriorities" placeholder="Priorities..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Escalation Rules -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🚨 Escalation Rules</h2>
+            </div>
+            <div class="escalation-grid">
+                <div class="escalation-box immediate">
+                    <h4>⚡ Immediate (Same Day)</h4>
+                    <ul class="checklist">
+                        <li><input type="checkbox" id="esc1"><label for="esc1">Missing time entries</label></li>
+                        <li><input type="checkbox" id="esc2"><label for="esc2">High-priority ticket inactivity</label></li>
+                        <li><input type="checkbox" id="esc3"><label for="esc3">Missing client deliverables</label></li>
+                    </ul>
+                </div>
+                <div class="escalation-box followup">
+                    <h4>📅 Next-Day Follow-Up</h4>
+                    <ul class="checklist">
+                        <li><input type="checkbox" id="esc4"><label for="esc4">Repeated minor errors</label></li>
+                        <li><input type="checkbox" id="esc5"><label for="esc5">Poor documentation quality</label></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Metrics -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🎯 Success Metrics</h2>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value">≥12</div>
+                    <div class="metric-label">Target Daily Score</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Missing Time Entries</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Ticket Delays</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Upload Errors</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📝 Notes / Observations</h2>
+            </div>
+            <textarea class="notes-field" id="generalNotes" placeholder="Additional notes and observations..." style="min-height: 150px;"></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveReport()">💾 Save Report</button>
+            <button class="btn btn-secondary" onclick="exportReport()">📤 Export as Text</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            <button class="btn btn-danger" onclick="clearForm()">🗑️ Clear All</button>
+        </div>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Store scores and statuses
+        const scores = { time: 0, ticket: 0, sharefile: 0 };
+        const statuses = { time: '', ticket: '', sharefile: '' };
+
+        // Score selector handlers
+        document.querySelectorAll('.score-selector').forEach(selector => {
+            const target = selector.dataset.target;
+            selector.querySelectorAll('.score-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selector.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    scores[target] = parseInt(btn.dataset.value);
+                    updateTotalScore();
+                    updateCardStyle(target);
+                });
+            });
+        });
+
+        // Status selector handlers
+        document.querySelectorAll('.status-selector').forEach(selector => {
+            const target = selector.dataset.target;
+            selector.querySelectorAll('.status-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selector.querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    statuses[target] = btn.dataset.status;
+                    updateCardStyle(target);
+                });
+            });
+        });
+
+        // Checkbox label styling
+        document.querySelectorAll('.checklist input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const label = checkbox.nextElementSibling;
+                label.classList.toggle('checked', checkbox.checked);
+            });
+        });
+
+        function updateTotalScore() {
+            const total = scores.time + scores.ticket + scores.sharefile;
+            document.getElementById('totalScore').textContent = total;
+            
+            const statusEl = document.getElementById('totalStatus');
+            if (total >= 12) {
+                statusEl.textContent = 'Healthy';
+                statusEl.style.background = 'rgba(16, 185, 129, 0.3)';
+            } else if (total >= 6) {
+                statusEl.textContent = 'Attention';
+                statusEl.style.background = 'rgba(245, 158, 11, 0.3)';
+            } else {
+                statusEl.textContent = 'High Risk';
+                statusEl.style.background = 'rgba(239, 68, 68, 0.3)';
+            }
+        }
+
+        function updateCardStyle(target) {
+            const cardMap = { time: 'timeCard', ticket: 'ticketCard', sharefile: 'sharefileCard' };
+            const scoreMap = { time: 'timeScore', ticket: 'ticketScore', sharefile: 'sharefileScore' };
+            const statusMap = { time: 'timeStatus', ticket: 'ticketStatus', sharefile: 'sharefileStatus' };
+            
+            const card = document.getElementById(cardMap[target]);
+            const scoreEl = document.getElementById(scoreMap[target]);
+            const statusEl = document.getElementById(statusMap[target]);
+            
+            scoreEl.textContent = scores[target];
+            
+            card.classList.remove('green', 'yellow', 'red');
+            statusEl.classList.remove('green', 'yellow', 'red');
+            
+            if (statuses[target]) {
+                card.classList.add(statuses[target]);
+                statusEl.classList.add(statuses[target]);
+                statusEl.textContent = statuses[target].charAt(0).toUpperCase() + statuses[target].slice(1);
+            }
+        }
+
+        function saveReport() {
+            const data = {
+                date: document.getElementById('currentDate').textContent,
+                owner: document.getElementById('ownerName').value,
+                scores,
+                statuses,
+                timeNotes: document.getElementById('timeNotes').value,
+                ticketNotes: document.getElementById('ticketNotes').value,
+                sharefileNotes: document.getElementById('sharefileNotes').value,
+                issues: [
+                    document.getElementById('issue1').value,
+                    document.getElementById('issue2').value,
+                    document.getElementById('issue3').value,
+                    document.getElementById('issue4').value,
+                    document.getElementById('issue5').value
+                ].filter(i => i),
+                staffFollowup: document.getElementById('staffFollowup').value,
+                criticalRisks: document.getElementById('criticalRisks').value,
+                nextDayPriorities: document.getElementById('nextDayPriorities').value,
+                generalNotes: document.getElementById('generalNotes').value
+            };
+            
+            localStorage.setItem('opsReport_' + new Date().toISOString().split('T')[0], JSON.stringify(data));
+            alert('Report saved to local storage!');
+        }
+
+        function exportReport() {
+            const total = scores.time + scores.ticket + scores.sharefile;
+            let text = `AFTER-HOURS DAILY OPERATIONS REPORT\n`;
+            text += `${'='.repeat(50)}\n\n`;
+            text += `Date: ${document.getElementById('currentDate').textContent}\n`;
+            text += `Owner: ${document.getElementById('ownerName').value || 'Not specified'}\n\n`;
+            text += `SCORES\n${'-'.repeat(30)}\n`;
+            text += `Time Entries: ${scores.time}/5 (${statuses.time || 'N/A'})\n`;
+            text += `Tickets: ${scores.ticket}/5 (${statuses.ticket || 'N/A'})\n`;
+            text += `ShareFile: ${scores.sharefile}/5 (${statuses.sharefile || 'N/A'})\n`;
+            text += `TOTAL: ${total}/15\n\n`;
+            
+            if (document.getElementById('timeNotes').value) {
+                text += `TIME ENTRY FLAGS:\n${document.getElementById('timeNotes').value}\n\n`;
+            }
+            if (document.getElementById('ticketNotes').value) {
+                text += `TICKET NOTES:\n${document.getElementById('ticketNotes').value}\n\n`;
+            }
+            if (document.getElementById('sharefileNotes').value) {
+                text += `SHAREFILE ISSUES:\n${document.getElementById('sharefileNotes').value}\n\n`;
+            }
+            
+            const issues = [1,2,3,4,5].map(i => document.getElementById('issue'+i).value).filter(v => v);
+            if (issues.length) {
+                text += `TOP ISSUES:\n`;
+                issues.forEach((issue, idx) => text += `${idx+1}. ${issue}\n`);
+                text += `\n`;
+            }
+            
+            if (document.getElementById('staffFollowup').value) {
+                text += `STAFF TO FOLLOW UP: ${document.getElementById('staffFollowup').value}\n\n`;
+            }
+            if (document.getElementById('criticalRisks').value) {
+                text += `CRITICAL RISKS: ${document.getElementById('criticalRisks').value}\n\n`;
+            }
+            if (document.getElementById('nextDayPriorities').value) {
+                text += `NEXT-DAY PRIORITIES: ${document.getElementById('nextDayPriorities').value}\n\n`;
+            }
+            if (document.getElementById('generalNotes').value) {
+                text += `NOTES:\n${document.getElementById('generalNotes').value}\n`;
+            }
+            
+            const blob = new Blob([text], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `ops-report-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+        }
+
+        function clearForm() {
+            if (confirm('Clear all entries? This cannot be undone.')) {
+                document.querySelectorAll('input[type="text"], textarea').forEach(el => el.value = '');
+                document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                    el.checked = false;
+                    if (el.nextElementSibling) el.nextElementSibling.classList.remove('checked');
+                });
+                document.querySelectorAll('.score-btn, .status-btn').forEach(btn => btn.classList.remove('selected'));
+                Object.keys(scores).forEach(k => scores[k] = 0);
+                Object.keys(statuses).forEach(k => statuses[k] = '');
+                ['time', 'ticket', 'sharefile'].forEach(updateCardStyle);
+                updateTotalScore();
+            }
+        }
+    </script>
+</body>
+</html>
