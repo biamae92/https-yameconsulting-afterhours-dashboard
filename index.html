@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YAME After-Hours Audit Console</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { background:#020617; }
+.panel { background:rgba(255,255,255,0.04); backdrop-filter:blur(10px); }
+.soft { color:#94a3b8; }
+.xbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #64748b;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.xbox:checked {
+  border-color: #ef4444;
+  background: rgba(239,68,68,0.15);
+}
+.xbox:checked::after {
+  content: "✕";
+  color: #ef4444;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body class="text-white">
+
+<div class="p-10 text-center border-b border-white/10">
+  <img src="logo.png" onclick="resetDashboard()" class="mx-auto w-56 mb-4 cursor-pointer hover:scale-105 transition" title="Click to reset dashboard" />
+  <h1 class="text-4xl font-extrabold tracking-tight">After-Hours Audit Console</h1>
+  <p class="soft mt-2">Operational integrity check • end-of-shift validation</p>
+
+  <button onclick="openConsole()" class="mt-6 px-6 py-3 rounded-xl bg-emerald-500 hover:scale-105 transition">
+    View Dashboard
+  </button>
+</div>
+
+<div id="console" class="hidden p-10 max-w-6xl mx-auto">
+  <div class="panel rounded-2xl p-6 mb-8 flex flex-wrap gap-6 justify-between">
+    <div>
+      <div class="soft text-sm">Employee Name</div>
+      <input class="mt-1 p-2 rounded bg-black text-white" />
+    </div>
+    <div>
+      <div class="soft text-sm">Reviewer</div>
+      <input class="mt-1 p-2 rounded bg-black text-white" />
+    </div>
+    <div>
+      <div class="soft text-sm">Shift Timestamp</div>
+      <div id="time" class="mt-1 font-bold"></div>
+    </div>
+    <div>
+      <div class="soft text-sm">System Status</div>
+      <div id="statusLabel" class="mt-1 font-bold text-yellow-300">Awaiting Input</div>
+    </div>
+  </div>
+
+  <div id="auditBlocks" class="grid md:grid-cols-3 gap-6"></div>
+
+  <div class="panel rounded-2xl p-6 mt-8">
+    <div class="flex justify-between items-center">
+      <h2 class="text-2xl font-bold">Operational Score</h2>
+      <div id="scoreDisplay" class="text-3xl font-black">0</div>
+    </div>
+  </div>
+
+  <div class="mt-8 p-6 rounded-2xl border border-red-500/30 bg-red-500/10">
+    <h3 class="text-xl font-bold text-red-300">Escalation Engine</h3>
+    <div id="escalation" class="mt-3 font-bold"></div>
+  </div>
+
+  <button onclick="lockShift()" class="mt-8 w-full py-4 rounded-xl bg-white/10 hover:bg-white/20">
+    Finalize & Lock Shift
+  </button>
+</div>
+
+<script>
+const model = [
+  {name:"Time Integrity",checks:["No missing entries","Descriptions accurate","Hours not overlogged","Correct client mapping"]},
+  {name:"Zoho Desk",checks:["No stale tickets","Updates match work done","Comments aligned with logs","No client risk"]},
+  {name:"Sharefile",checks:["Files uploaded to QBO / mailscan cleared","Correct folder","Naming standards followed"]}
+];
+
+const container = document.getElementById("auditBlocks");
+
+model.forEach((item,i)=>{
+  const block = document.createElement("div");
+  block.className = "panel p-6 rounded-2xl";
+
+  const checklist = item.checks.map(c=>`
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+      <input type="checkbox" class="xbox">
+      ${c}
+    </label>`).join("");
+
+  block.innerHTML = `
+    <h3 class="text-xl font-bold mb-3">${item.name}</h3>
+    <div class="space-y-1">${checklist}</div>
+    <textarea class="w-full mt-2 p-2 bg-black"></textarea>`;
+
+  container.appendChild(block);
+});
+
+function openConsole(){
+  document.getElementById("console").classList.remove("hidden");
+  document.getElementById("time").innerText = new Date().toLocaleString();
+}
+
+document.addEventListener("change", ()=>{
+  let total = document.querySelectorAll("input[type='checkbox']:checked").length;
+  document.getElementById("scoreDisplay").innerText = total;
+
+  let status = document.getElementById("statusLabel");
+  let escalation = document.getElementById("escalation");
+
+  if(total === 0){
+    status.innerText="Clean"; status.className="text-emerald-400";
+    escalation.innerText="No issues";
+  } else if(total <=6){
+    status.innerText="Yellow"; status.className="text-yellow-300";
+    escalation.innerText="Monitor";
+  } else {
+    status.innerText="Red"; status.className="text-red-400";
+    escalation.innerText="Escalate";
+  }
+});
+
+function resetDashboard(){
+  location.reload();
+}
+
+function lockShift(){
+  document.querySelectorAll("input,textarea").forEach(el=>el.disabled=true);
+}
+</script>
+
+</body>
+</html>
